@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, create_engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, sessionmaker
 
 Base = declarative_base()
 
@@ -52,11 +52,14 @@ class IssuesDB(object):
     password = ""
     db_type  = ""
     engine   = None
+    Session  = None
 
     def __init__(self, db_type="sqlite:///:memory:"):
         self.db_type = db_type
         self.engine = create_engine(self.db_type, echo=False) # echo True to debug
         Base.metadata.create_all(self.engine)
+        self.Session = sessionmaker()
+        self.Session.configure(bind=self.engine)
         
 
 

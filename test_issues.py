@@ -8,19 +8,15 @@ from sqlalchemy.schema import MetaData
 
 class DbTests(unittest.TestCase):
     db      = None
-    Session = None
 
     def setUp(self):
         self.db = IssuesDB()
-        self.Session = sessionmaker()
-        self.Session.configure(bind=self.db.engine)
 
     def getSession(self):
-        return self.Session()
+        return self.db.Session()
 
     def test_connect_db(self):
         self.assertIsInstance(self.db.engine, Engine)
-
 
     def test_create_user(self):
         fuser = User(name='franklin', email='franklinscott@gmail.com')
@@ -58,7 +54,25 @@ class DbTests(unittest.TestCase):
         new_new_fissue = sess.query(Issue).filter_by(title='franklin do this').first()
         self.assertEqual(new_new_fissue.description,'blah')
         new_sess.commit()
-        new_sess.close()        
+        new_sess.close()
+
+    def test_create_status(self):
+        fstatus = Status(name='donedone')
+        self.assertEqual(fstatus.name,'donedone')
+
+    def test_add_issue(self):
+        fstatus = Status(name='donedone')
+        sess = self.getSession()
+        sess.add(fstatus)
+        new_fstatus = sess.query(Status).filter_by(name='donedone').first()
+        self.assertEqual(fstatus,new_fstatus)
+        sess.commit()
+        sess.close()
+        new_sess = self.getSession()
+        new_new_fstatus = sess.query(Status).filter_by(name='donedone').first()
+        self.assertEqual(new_new_fstatus.name,'donedone')
+        new_sess.commit()
+        new_sess.close()              
 
         
 

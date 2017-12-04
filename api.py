@@ -1,10 +1,9 @@
 from flask import Flask, jsonify, request
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-from marshmallow import Schema, fields
+#from sqlalchemy.orm import sessionmaker
+#from sqlalchemy.ext.declarative import declarative_base
+#from marshmallow import Schema, fields
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
-#from issues import * 
 
 
 app = Flask(__name__)
@@ -86,13 +85,12 @@ def issues():
     for issue in issues:
         results[issue.id] = issue_schema.dump(issue)
     return jsonify(results)
-    # OR
-    # return user_schema.jsonify(all_users)
 
 @app.route('/api/issue/<id>')
 def issue_detail(id):
-    issue = Issue.get(id)
-    return issue_schema.jsonify(issue)
+    issue = Issue(id=id)
+    result = issue_schema.dump(issue)
+    return jsonify(result)
 
 @app.route('/api/issue/add')
 def issue_add():

@@ -1,5 +1,4 @@
-from flask import Flask
-from flask_restful import reqparse, abort, Api, Resource
+from flask import Flask, jsonify, request
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from marshmallow import Schema, fields
@@ -14,13 +13,12 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data/test.db'
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 
-api = Api(app)
 api_version = '/v1'
 api_route = '/api'
 
-Base = declarative_base()
+#Base = declarative_base()
 
-class Issue(Base):
+class Issue(db.Model):
     """docstring for Issue"""
     __tablename__   = 'issues'
 
@@ -34,10 +32,10 @@ class Issue(Base):
     assignee        = db.relationship("User", back_populates="issues")
 
     def __repr__(self):
-        return "<Issue(title={0}.title, description={0}.description)>".format(self)
+        return "<Issue(title={0.title}, description={0.description})>".format(self)
 
 
-class Status(Base):
+class Status(db.Model):
     """docstring for Status"""
     __tablename__   = 'statuses'
 
@@ -47,9 +45,9 @@ class Status(Base):
     issues          = db.relationship("Issue")
 
     def __repr__(self):
-        return "<Status(name={0}.name)>".format(self)
+        return "<Status(name={0}.name)>".format(self=self)
 
-class User(Base):
+class User(db.Model):
     """docstring for User"""
     __tablename__   = 'users'
 
@@ -60,18 +58,18 @@ class User(Base):
     issues          = db.relationship("Issue")
 
     def __repr__(self):
-        return "<User(name={0}.name, email={0}.email)>".format(self)
+        return "<User(name={0}.name, email={0}.email)>".format(self=self)
 
 
-class IssueSchema(Schema):
+class IssueSchema(ma.ModelSchema):
     class Meta:
         model = Issue
 
-class StatusSchema(Schema):
+class StatusSchema(ma.ModelSchema):
     class Meta:
         model = Status
 
-class UserSchema(Schema):
+class UserSchema(ma.ModelSchema):
     class Meta:
         model = User
 
@@ -81,40 +79,31 @@ issue_schema    = IssueSchema()
 status_schema   = StatusSchema()
 user_schema     = UserSchema()
 
-# Issue
-# shows a single issue and lets you delete an issue
-class IssueId(Resource):
-    def get(self, issue_id):
-        issue = Issue(id=issue_id)
-        return issue_schema.dump(issue).data, 200
+@app.route('/api/issues/')
+def issues():
+    issues = db.session.query(Issue).all()
+    results = {}
+    for issue in issues:
+        results[issue.id] = issue_schema.dump(issue)
+    return jsonify(results)
+    # OR
+    # return user_schema.jsonify(all_users)
 
-    def delete(self, issue_id):
-        return '', 501
+@app.route('/api/issue/<id>')
+def issue_detail(id):
+    issue = Issue.get(id)
+    return issue_schema.jsonify(issue)
 
-class IssueAdd(Resource):
-    def put(self, title):
+@app.route('/api/issue/add')
+def issue_add():
+    title = request.args.get('title')
+    if title:
         issue = Issue(title=title)
         db.session.add(issue)
         db.session.commit()
-        return issue_schema.dump(issue).data, 200
-
-
-# IssueList
-# shows a list of all issues, and lets you POST to add new issues
-class IssueListAPI(Resource):
-    def get(self):
-        issues = Issue.all()
-        return issue_schema.dump(issues, many=True), 200
-
-    def post(self):
-        return '', 501
-
-##
-## Actually setup the Api resource routing here
-##
-api.add_resource(IssueListAPI, api_route + '/issues', api_route + api_version + '/issues')
-api.add_resource(IssueId, api_route + '/issue/<issue_id>', api_route + api_version + '/issue/<issue_id>')
-api.add_resource(IssueAdd, api_route + '/issue/add/<title>', api_route + api_version + '/issue/add/<title>')
+        return issue_schema.jsonify(issue)
+    else:
+        return "provide a title to add a new issue", 400
 
 
 if __name__ == '__main__':

@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+from sqlalchemy import or_
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data/test.db'
@@ -80,22 +81,33 @@ def issue_assign():
 
 @app.route('/api/user/add')
 def user_add():
-    user = request.args.get('user')
+    name = request.args.get('name')
     email = request.args.get('email')
-    if user and email:
-        if db.session.query(User).filter(name == user | email == email).first():
-            user = User(name=user, email=email)
+    print(name)
+    print(email)
+    if name and email:
+        if not db.session.query(User).filter((User.name == name) | (User.email == email)).first():
+            user = User(name=name, email=email)
             db.session.add(user)
             db.session.commit()
-            return issue_schema.jsonify(user)
+            return user_schema.jsonify(user)
         else:
             return jsonify("user name or email already taken"), 400
     else:
         return jsonify("provide a user name and email address"), 400
 
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route('/api/user')
+def user_detail():
+    name = request.args.get('name')
+    if name:
+        user = db.session.query(User).filter(name == name).first()
+        print(user)
+        result = user_schema.dump(user)
+        print(result)
+        return jsonify(result)
+    else:
+        return "provide a name", 404      
 
-                      
-#if __name__ == '__main__':
-#    app.run(host='pi2.int.franklinscott.com', port=8070)                      
+if __name__ == '__main__':
+    app.run()
+                     

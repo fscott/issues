@@ -1,10 +1,11 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
+from flask_sqlalchemy import SQLAlchemy
 
-Base = declarative_base()
+db = SQLAlchemy()
 
-class Issue(Base):
+class Issue(db.Model):
     """docstring for Issue"""
     __tablename__   = 'issues'
 
@@ -18,10 +19,10 @@ class Issue(Base):
     assignee        = relationship("User", back_populates="issues")
 
     def __repr__(self):
-        return "<Issue(title={0}.title, description={0}.description)>".format(self)
+        return "<Issue(title={0.title}, description={0.description})>".format(self)
 
 
-class Status(Base):
+class Status(db.Model):
     """docstring for Status"""
     __tablename__   = 'statuses'
 
@@ -31,9 +32,9 @@ class Status(Base):
     issues          = relationship("Issue")
 
     def __repr__(self):
-        return "<Status(name={0}.name)>".format(self)
+        return "<Status(name={0.name})>".format(self)
 
-class User(Base):
+class User(db.Model):
     """docstring for User"""
     __tablename__   = 'users'
 
@@ -44,26 +45,7 @@ class User(Base):
     issues          = relationship("Issue")
 
     def __repr__(self):
-        return "<User(name={0}.name, email={0}.email)>".format(self)
-
-class IssuesDB(object):
-    """docstring for IssuesDB"""
-    username = ""
-    password = ""
-    db_type  = ""
-    engine   = None
-    Session  = None
-
-    def __init__(self, db_type="sqlite:///:memory:"):
-        self.db_type = db_type
-        self.engine = create_engine(self.db_type, echo=False) # echo True to debug
-        Base.metadata.create_all(self.engine)
-        self.Session = sessionmaker()
-        self.Session.configure(bind=self.engine)
-        
-
-
-
+        return "<User(name={0.name}, email={0.email})>".format(self)
 
 
 

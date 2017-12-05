@@ -1,64 +1,22 @@
 from flask import Flask, jsonify, request
-#from sqlalchemy.orm import sessionmaker
-#from sqlalchemy.ext.declarative import declarative_base
-#from marshmallow import Schema, fields
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 
-
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data/test.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db = SQLAlchemy(app)
+# this order is important: https://flask-marshmallow.readthedocs.io/en/latest/
 ma = Marshmallow(app)
 
 api_version = '/v1'
 api_route = '/api'
 
-#Base = declarative_base()
-
-class Issue(db.Model):
-    """docstring for Issue"""
-    __tablename__   = 'issues'
-
-    id              = db.Column(db.Integer, primary_key=True)
-    title           = db.Column(db.String, nullable=False)
-    description     = db.Column(db.String)
-    assignee_id     = db.Column(db.Integer, db.ForeignKey('users.id'))
-    status_id       = db.Column(db.Integer, db.ForeignKey('statuses.id'))
-
-    status          = db.relationship("Status", back_populates="issues")
-    assignee        = db.relationship("User", back_populates="issues")
-
-    def __repr__(self):
-        return "<Issue(title={0.title}, description={0.description})>".format(self)
-
-
-class Status(db.Model):
-    """docstring for Status"""
-    __tablename__   = 'statuses'
-
-    id              = db.Column(db.Integer, primary_key=True)
-    name            = db.Column(db.String)
-
-    issues          = db.relationship("Issue")
-
-    def __repr__(self):
-        return "<Status(name={0}.name)>".format(self=self)
-
-class User(db.Model):
-    """docstring for User"""
-    __tablename__   = 'users'
-
-    id              = db.Column(db.Integer, primary_key=True)
-    name            = db.Column(db.String)
-    email           = db.Column(db.String)
-
-    issues          = db.relationship("Issue")
-
-    def __repr__(self):
-        return "<User(name={0}.name, email={0}.email)>".format(self=self)
-
+# https://stackoverflow.com/a/19849375
+from models import db, Issue, User, Status
+db.app = app
+db.init_app(app)
+db.create_all()
 
 class IssueSchema(ma.ModelSchema):
     class Meta:
@@ -72,23 +30,25 @@ class UserSchema(ma.ModelSchema):
     class Meta:
         model = User
 
-db.create_all()
-
 issue_schema    = IssueSchema()
 status_schema   = StatusSchema()
 user_schema     = UserSchema()
 
-@app.route('/api/issues/')
+
+@app.route(api_route + '/issues/', methods=['GET'])
 def issues():
     issues = db.session.query(Issue).all()
     results = {}
-    for issue in issues:
-        results[issue.id] = issue_schema.dump(issue)
+    if issues:
+        for issue in issues:
+            results[issue.id] = issue_schema.dump(issue)
+    else:
+        return jsonify("no issues found"), 404
     return jsonify(results)
 
 @app.route('/api/issue/<id>')
 def issue_detail(id):
-    issue = Issue(id=id)
+    issue = db.session.query(Issue).get_or_404(id)
     result = issue_schema.dump(issue)
     return jsonify(result)
 
@@ -101,11 +61,39 @@ def issue_add():
         db.session.commit()
         return issue_schema.jsonify(issue)
     else:
-        return "provide a title to add a new issue", 400
+        return jsonify("provide a title to add a new issue"), 400
 
+@app.route('/api/issue/assign')
+def issue_assign():
+    user = request.args.get('user')
+    issue_id = request.args.get('issue_id')
+    issue = db.session.query(Issue).get(issue_id)
+    if user:
+        if issue:
+            db.session.update(Issue).where(id == issue_id).values(assignee = user.id)
+            db.session.commit()
+            return issue_schema.jsonify(issue)
+        else:
+            return jsonify("provide a valid issue id"), 400
+    else:
+        return jsonify("provide a valid user name"), 400
+
+@app.route('/api/user/add')
+def user_add():
+    user = request.args.get('user')
+    email = request.args.get('email')
+    if user and email:
+        if db.session.query(User).filter(name == user | email == email).first():
+            user = User(name=user, email=email)
+            db.session.add(user)
+            db.session.commit()
+            return issue_schema.jsonify(user)
+        else:
+            return jsonify("user name or email already taken"), 400
+    else:
+        return jsonify("provide a user name and email address"), 400
 
 if __name__ == '__main__':
-
     app.run(debug=True)
 
                       

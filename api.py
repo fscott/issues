@@ -1,10 +1,9 @@
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
-from sqlalchemy import or_
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data/test.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data/prod.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # this order is important: https://flask-marshmallow.readthedocs.io/en/latest/
@@ -83,8 +82,6 @@ def issue_assign():
 def user_add():
     name = request.args.get('name')
     email = request.args.get('email')
-    print(name)
-    print(email)
     if name and email:
         if not db.session.query(User).filter((User.name == name) | (User.email == email)).first():
             user = User(name=name, email=email)
@@ -101,9 +98,7 @@ def user_detail():
     name = request.args.get('name')
     if name:
         user = db.session.query(User).filter(name == name).first()
-        print(user)
         result = user_schema.dump(user)
-        print(result)
         return jsonify(result)
     else:
         return "provide a name", 404      

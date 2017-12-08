@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+
+"""
+Copyright (c) 2017 Franklin Scott
+All Rights Reserved.
+"""
+
 import jinja2
 from flask import Flask
 

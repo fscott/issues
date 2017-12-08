@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+
+"""
+Copyright (c) 2017 Franklin Scott
+All Rights Reserved.
+"""
+
 from sqlalchemy import Column, Integer, String, ForeignKey, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker

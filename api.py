@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+
+"""
+Copyright (c) 2017 Franklin Scott
+All Rights Reserved.
+"""
+
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
@@ -46,13 +53,13 @@ def issues():
         return jsonify("no issues found"), 404
     return jsonify(results)
 
-@app.route('/api/issue/<id>')
+@app.route('/api/issue/<id>', methods=['GET'])
 def issue_detail(id):
     issue = db.session.query(Issue).get_or_404(id)
     result = issue_schema.dump(issue)
     return jsonify(result)
 
-@app.route('/api/issue/add')
+@app.route('/api/issue/add', methods=['POST'])
 def issue_add():
     title = request.args.get('title')
     if title:
@@ -63,7 +70,7 @@ def issue_add():
     else:
         return jsonify("provide a title to add a new issue"), 400
 
-@app.route('/api/issue/assign')
+@app.route('/api/issue/assign', methods=['POST'])
 def issue_assign():
     user = request.args.get('user')
     issue_id = request.args.get('issue_id')
@@ -78,7 +85,7 @@ def issue_assign():
     else:
         return jsonify("provide a valid user name"), 400
 
-@app.route('/api/user/add')
+@app.route('/api/user/add', methods=['POST'])
 def user_add():
     name = request.args.get('name')
     email = request.args.get('email')
@@ -93,7 +100,7 @@ def user_add():
     else:
         return jsonify("provide a user name and email address"), 400
 
-@app.route('/api/user')
+@app.route('/api/user', methods=['GET'])
 def user_detail():
     name = request.args.get('name')
     if name:

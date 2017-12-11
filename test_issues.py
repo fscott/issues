@@ -6,33 +6,38 @@ All Rights Reserved.
 """
 
 import unittest
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 import os
-from api import app, db
+import api
+import tempfile
+import issues_app
+
 
 class APITests(unittest.TestCase):
 
+    #mapp = Flask(__name__)
+    db = SQLAlchemy()
+    path_to_db = 'data/test.db'
+
     def setUp(self):
-        self.path_to_db = 'data/test.db'
-        self.db_info = 'sqlite:///' + self.path_to_db
-        app.config['SQLALCHEMY_DATABASE_URI'] = self.db_info
-        app.config['TESTING'] = True
-        self.app = app.test_client()
-        from models import db, Issue, User, Status
-        db.app = self.app
-        db.init_app(self.app)
-        db.create_all()
+        self.mapp = api.create_test_api()
+        self.db = api.create_test_db(self.mapp)
+        print(self.mapp.url_map)
+        self.client = self.mapp.test_client()
 
     def tearDown(self):
         os.remove(self.path_to_db)
 
     def test_add_user(self):
-        res = self.app.get('api/user/add', query_string=dict(name='franklin',email='franklinscott@gmail.com'))
+        res = self.client.get('api/user/add', query_string=dict(name='franklin',email='franklinscott@gmail.com'))
         assert res.status_code == 405
-        res = self.app.get('api/user/add', query_string=dict(name='franklin',email='franklinscott@gmail.com'))
+        res = self.client.post('api/user/add', query_string=dict(name='franklin',email='franklinscott@gmail.com'))
         assert res.status_code == 200
+        assert b'id' in res.data
 
     def test_get_all_issues(self):
-        res = self.app.get('/api/issues/')
+        res = self.client.get('/api/issues/')
         assert res.data
 
         

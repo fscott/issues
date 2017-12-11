@@ -8,22 +8,16 @@ All Rights Reserved.
 from flask import Flask, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+from models import Issue, User, Status
+import issues_app
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data/prod.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 # this order is important: https://flask-marshmallow.readthedocs.io/en/latest/
 ma = Marshmallow(app)
+db = SQLAlchemy()
 
 api_version = '/v1'
 api_route = '/api'
-
-# https://stackoverflow.com/a/19849375
-from models import db, Issue, User, Status
-db.app = app
-db.init_app(app)
-db.create_all()
 
 class IssueSchema(ma.ModelSchema):
     class Meta:
@@ -41,6 +35,11 @@ issue_schema    = IssueSchema()
 status_schema   = StatusSchema()
 user_schema     = UserSchema()
 
+def create_test_api():
+    return issues_app.create_test_app(app)
+
+def create_test_db(app):
+    return issues_app.initialize_db(app)    
 
 @app.route(api_route + '/issues/', methods=['GET'])
 def issues():
@@ -111,5 +110,8 @@ def user_detail():
         return "provide a name", 404      
 
 if __name__ == '__main__':
+    app = issues_app.create_prod_app(app)
+    ma = Marshmallow(app)
+    db = issues_app.initialize_db(app)
     app.run()
                      

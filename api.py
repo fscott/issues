@@ -72,18 +72,16 @@ def issue_add():
 
 @app.route('/api/issue/assign', methods=['POST'])
 def issue_assign():
-    user = request.args.get('user')
+    user_id = request.args.get('user_id')
     issue_id = request.args.get('issue_id')
     issue = db.session.query(Issue).get(issue_id)
-    if user:
-        if issue:
-            db.session.update(Issue).where(id == issue_id).values(assignee = user.id)
-            db.session.commit()
-            return issue_schema.jsonify(issue)
-        else:
-            return jsonify("provide a valid issue id"), 400
+    user = db.session.query(User).get(user_id)
+    if user and issue:
+        issue.assignee = user
+        db.session.commit()
+        return issue_schema.jsonify(issue)
     else:
-        return jsonify("provide a valid user name"), 400
+        return jsonify("provide a valid issue id and user id"), 400
 
 @app.route('/api/user/add', methods=['POST'])
 def user_add():
@@ -104,11 +102,14 @@ def user_add():
 def user_detail():
     name = request.args.get('name')
     if name:
-        user = db.session.query(User).filter(name == name).first()
-        result = user_schema.dump(user)
-        return jsonify(result)
+        return jsonify(get_user_by_name(name))
     else:
         return "provide a name", 404      
+
+def get_user_by_name(name):
+    user = db.session.query(User).filter(name == name).first()
+    result = user_schema.dump(user)
+    return result
 
 if __name__ == '__main__':
     app = issues_app.create_prod_app(app)

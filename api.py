@@ -48,9 +48,10 @@ def issues():
     if issues:
         for issue in issues:
             results[issue.id] = issue_schema.dump(issue)
+        return jsonify(results)
     else:
         return jsonify("no issues found"), 404
-    return jsonify(results)
+    
 
 @app.route('/api/issue/<id>', methods=['GET'])
 def issue_detail(id):

@@ -17,10 +17,12 @@ env = jinja2.Environment(
 
 template = env.get_template('index.html')
 
+
 @app.route("/board")
 def display_board():
     return template.render()
-                      
+
+
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8070)
-    #app.run(host='pi2.int.franklinscott.com', port=8070)
+    # app.run(host='pi2.int.franklinscott.com', port=8070)

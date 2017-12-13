@@ -5,12 +5,12 @@ Copyright (c) 2017 Franklin Scott
 All Rights Reserved.
 """
 
-from sqlalchemy import Column, Integer, String, ForeignKey, create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
+
 
 class Issue(db.Model):
     """docstring for Issue"""
@@ -26,7 +26,8 @@ class Issue(db.Model):
     assignee        = relationship("User", back_populates="issues")
 
     def __repr__(self):
-        return "<Issue(title={0.title}, description={0.description})>".format(self)
+        return "<Issue(title={0.title},\
+                 description={0.description})>".format(self)
 
 
 class Status(db.Model):
@@ -41,6 +42,7 @@ class Status(db.Model):
     def __repr__(self):
         return "<Status(name={0.name})>".format(self)
 
+
 class User(db.Model):
     """docstring for User"""
     __tablename__   = 'users'
@@ -53,7 +55,3 @@ class User(db.Model):
 
     def __repr__(self):
         return "<User(name={0.name}, email={0.email})>".format(self)
-
-
-
-

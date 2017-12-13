@@ -42,7 +42,7 @@ class APITests(unittest.TestCase):
         assert data['email'] == 'franklin@gmail.com'
         id = data['id']
 
-        res = self.client.get('api/user', query_string=dict(name='franklin'))
+        res = self.client.get('api/user', query_string=dict(email='franklin@gmail.com'))
         data = json.loads(res.data.decode())
         assert data[0]['id'] == id
         assert isinstance(data[0]['id'], int) and data[0]['id'] > -1
@@ -81,6 +81,24 @@ class APITests(unittest.TestCase):
         assert data['title'] == 'do this2'
         assert data['assignee'] == user_id
         assert isinstance(data['id'], int) and data['id'] > -1
+
+    def test_add_status(self):
+        res = self.client.post('api/status/add', query_string=dict(name='in progress'))
+        assert res.status_code == 200
+        data = json.loads(res.data.decode())
+        assert data['name'] == 'in progress'
+        assert isinstance(data['id'], int) and data['id'] > -1
+
+
+    def test_get_status(self):
+        name = 'all done'
+        res = self.client.post('api/status/add',
+                               query_string=dict(name=name))
+        issue_id = json.loads(res.data.decode())['id']
+        res = self.client.get('api/status/' + name)
+        ret_name = json.loads(res.data.decode())['name']
+        assert ret_name == name
+
 
     def test_get_all_issues(self):
         res = self.client.get('api/issues/')

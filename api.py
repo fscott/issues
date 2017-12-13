@@ -112,18 +112,41 @@ def user_add():
 
 @app.route('/api/user', methods=['GET'])
 def user_detail():
-    name = request.args.get('name')
-    if name:
-        return jsonify(get_user_by_name(name))
+    email = request.args.get('email')
+    if email:
+        return jsonify(get_user_by_email(email))
     else:
-        return "provide a name", 404
+        return jsonify("provide a user's email address"), 404
 
 
-def get_user_by_name(name):
-    user = db.session.query(User).filter(name == name).first()
+def get_user_by_email(email):
+    user = db.session.query(User).filter(User.email == email).first()
     result = user_schema.dump(user)
     return result
 
+
+@app.route('/api/status/add', methods=['POST'])
+def status_add():
+    name = request.args.get('name')
+    if name:
+        status = Status(name=name)
+        db.session.add(status)
+        db.session.commit()
+        return status_schema.jsonify(status)
+    else:
+        return jsonify("provide a name for the new status"), 400
+
+@app.route('/api/status/<name>', methods=['GET'])
+def status_detail(name):
+    if name:
+        status = db.session.query(Status).filter(Status.name == name).first()
+        if status:
+            result = status_schema.dump(status)
+            return jsonify(result[0]) 
+        else:
+            return jsonify("provide a status name"), 404
+    else:
+        return jsonify("provide a valid status name"), 400
 
 if __name__ == '__main__':
     app = issues_app.create_prod_app(app)

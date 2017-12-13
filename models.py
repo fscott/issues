@@ -35,7 +35,7 @@ class Status(db.Model):
     __tablename__   = 'statuses'
 
     id              = Column(Integer, primary_key=True)
-    name            = Column(String)
+    name            = Column(String, unique=True)
 
     issues          = relationship("Issue")
 
@@ -48,8 +48,8 @@ class User(db.Model):
     __tablename__   = 'users'
 
     id              = Column(Integer, primary_key=True)
-    name            = Column(String)
-    email           = Column(String)
+    name            = Column(String, nullable=False)
+    email           = Column(String, unique=True, nullable=False)
 
     issues          = relationship("Issue")
 

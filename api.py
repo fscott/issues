@@ -148,6 +148,19 @@ def status_detail(name):
     else:
         return jsonify("provide a valid status name"), 400
 
+@app.route('/api/status/change', methods=['POST'])
+def status_change():
+    status_name = request.args.get('status')
+    issue_id = request.args.get('issue_id')
+    issue = db.session.query(Issue).get(issue_id)
+    status = db.session.query(Status).filter(Status.name == status_name).first()
+    if status and issue:
+        issue.status = status
+        db.session.commit()
+        return issue_schema.jsonify(issue)
+    else:
+        return jsonify("provide a valid issue id and status name"), 400    
+
 if __name__ == '__main__':
     app = issues_app.create_prod_app(app)
     ma = Marshmallow(app)

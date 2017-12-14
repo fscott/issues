@@ -94,10 +94,23 @@ class APITests(unittest.TestCase):
         name = 'all done'
         res = self.client.post('api/status/add',
                                query_string=dict(name=name))
-        issue_id = json.loads(res.data.decode())['id']
         res = self.client.get('api/status/' + name)
         ret_name = json.loads(res.data.decode())['name']
         assert ret_name == name
+
+    def test_status_change(self):
+        name = 'backlog'
+        res = self.client.post('api/status/add',
+                               query_string=dict(name=name))
+        assert res.status_code == 200
+        status_id = json.loads(res.data.decode())['id']
+        res = self.client.post('api/issue/add', query_string=dict(title='do this again'))
+        assert res.status_code == 200
+        issue_id = json.loads(res.data.decode())['id']
+
+        res = self.client.post('api/status/change', query_string=dict(status=name, issue_id=issue_id))
+        data = json.loads(res.data.decode())
+        assert status_id == data['status']
 
 
     def test_get_all_issues(self):
